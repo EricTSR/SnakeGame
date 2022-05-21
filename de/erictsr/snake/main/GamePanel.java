@@ -5,12 +5,16 @@ import de.erictsr.snake.main.OBJ.OBJ_Inverter;
 import de.erictsr.snake.main.OBJ.OBJ_LSD;
 import de.erictsr.snake.main.OBJ.OBJ_Speed;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Random;
 
 public class GamePanel extends JPanel implements ActionListener {
@@ -29,8 +33,16 @@ public class GamePanel extends JPanel implements ActionListener {
     static char direction = 'R';
     boolean running = false;
     public static Timer timer;
+
+    public static Image imgR;
+    public static Image imgL;
+    public static Image imgD;
+    public static Image imgU;
+
     Random random;
 
+
+    //import Items
     OBJ_Apple apple = new OBJ_Apple();
     OBJ_Speed speed = new OBJ_Speed();
     OBJ_Inverter inverter = new OBJ_Inverter();
@@ -47,12 +59,18 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void startGame() {
+
+        imgU = Toolkit.getDefaultToolkit().getImage("./src/rsc/jannis_U.png");
+        imgD = Toolkit.getDefaultToolkit().getImage("./src/rsc/jannis_D.png");
+        imgL = Toolkit.getDefaultToolkit().getImage("./src/rsc/jannis_L.png");
+        imgR = Toolkit.getDefaultToolkit().getImage("./src/rsc/jannis_R.png");
         apple.newApple();
         speed.newSpeed();
         lsd.newLSD();
         inverter.newInverter();
         running = true;
         timer = new Timer(DELAY, this);
+
         timer.start();
     }
 
@@ -60,6 +78,7 @@ public class GamePanel extends JPanel implements ActionListener {
         super.paintComponent(g);
         draw(g);
     }
+
 
     public void draw(Graphics g) {
         if (running) {
@@ -83,12 +102,19 @@ public class GamePanel extends JPanel implements ActionListener {
 
             for (int i = 0; i < bodyParts; i++) {
                 if (i == 0) {
-                    g.setColor(Color.GREEN);
-                    g.setColor(new Color(new Random().nextInt(255), new Random().nextInt(255), new Random().nextInt(255)));
+                    if (direction == 'U') {
+                        g.drawImage(imgU, x[i], y[i], UNIT_SIZE, UNIT_SIZE, null);
+                    } else if (direction == 'D') {
+                        g.drawImage(imgD, x[i], y[i], UNIT_SIZE, UNIT_SIZE, null);
+                    } else if (direction == 'R') {
+                        g.drawImage(imgR, x[i], y[i], UNIT_SIZE, UNIT_SIZE, null);
+                    } else {
+                        g.drawImage(imgL, x[i], y[i], UNIT_SIZE, UNIT_SIZE, null);
+                    }
                 } else {
                     g.setColor(Color.GRAY);
+                    g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
                 }
-                g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
             }
 
             g.setColor(Color.RED);
