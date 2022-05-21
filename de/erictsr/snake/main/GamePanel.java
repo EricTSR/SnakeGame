@@ -1,5 +1,9 @@
 package de.erictsr.snake.main;
 
+import de.erictsr.snake.main.OBJ.OBJ_Apple;
+import de.erictsr.snake.main.OBJ.OBJ_Inverter;
+import de.erictsr.snake.main.OBJ.OBJ_Speed;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -7,29 +11,31 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Random;
-import java.util.TimerTask;
 
 public class GamePanel extends JPanel implements ActionListener {
 
-    static final int SCREEN_WIDTH = 600;
-    static final int SCREEN_HEIGHT = 600;
+    public static final int SCREEN_WIDTH = 600;
+    public static final int SCREEN_HEIGHT = 600;
 
+    public static final int UNIT_SIZE = 25;
+    public static final int GAME_UNITS = (SCREEN_WIDTH * SCREEN_HEIGHT) / UNIT_SIZE;
+    static int DELAY = 200;
 
-    static final int UNIT_SIZE = 25;
-    static final int GAME_UNITS = (SCREEN_WIDTH * SCREEN_HEIGHT) / UNIT_SIZE;
-    static int DELAY = 75;
-
-    final int[] x = new int[GAME_UNITS];
-    final int[] y = new int[GAME_UNITS];
-    int bodyParts = 6;
-    int applesEaten, appleX, appleY;
+    public static final int[] x = new int[GAME_UNITS];
+    public static final int[] y = new int[GAME_UNITS];
+    public static int bodyParts = 6;
+    public static int applesEaten = 0;
     int speedX, speedY;
     static char direction = 'R';
     boolean running = false;
-    Timer timer;
+    public static Timer timer;
     Random random;
 
-    GamePanel() {
+    OBJ_Apple apple = new OBJ_Apple();
+    OBJ_Speed speed = new OBJ_Speed();
+    OBJ_Inverter inverter = new OBJ_Inverter();
+
+    public GamePanel() {
         random = new Random();
         this.setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
         this.setBackground(Color.BLACK);
@@ -40,8 +46,9 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void startGame() {
-        newApple();
-        newSpeed();
+        apple.newApple();
+        speed.newSpeed();
+        inverter.newInverter();
         running = true;
         timer = new Timer(DELAY, this);
         timer.start();
@@ -55,17 +62,16 @@ public class GamePanel extends JPanel implements ActionListener {
     public void draw(Graphics g) {
         if (running) {
 
-            this.setBackground(new Color(new Random().nextInt(255), new Random().nextInt(255), new Random().nextInt(255)));
+            this.setBackground(Color.BLACK);
 
             for (int i = 0; i < SCREEN_WIDTH / UNIT_SIZE; i++) {
                 g.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
                 g.drawLine(0, i * UNIT_SIZE, SCREEN_WIDTH, i * UNIT_SIZE);
             }
+            apple.draw(g);
+            speed.draw(g);
+            inverter.draw(g);
 
-            g.setColor(Color.RED);
-            g.fillOval(appleX, appleY, UNIT_SIZE, UNIT_SIZE);
-            g.setColor(Color.YELLOW);
-            g.fillOval(speedX, speedY, UNIT_SIZE, UNIT_SIZE);
 
             for (int i = 0; i < bodyParts; i++) {
                 if (i == 0) {
@@ -84,7 +90,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
             g.setFont(new Font("Ink Free", Font.BOLD, 25));
             FontMetrics metrics3 = getFontMetrics(g.getFont());
-            g.drawString("Speed: " + timer.getDelay(), (SCREEN_WIDTH - metrics3.stringWidth("Speed: " + timer.getDelay())) / 2, g.getFont().getSize()*2);
+            g.drawString("Speed: " + timer.getDelay(), (SCREEN_WIDTH - metrics3.stringWidth("Speed: " + timer.getDelay())) / 2, g.getFont().getSize() * 2);
 
         } else {
             gameOver(g);
@@ -92,47 +98,8 @@ public class GamePanel extends JPanel implements ActionListener {
 
     }
 
-    public void newApple() {
-        //random.nextInt(10) * größe
-        appleX = random.nextInt((int) SCREEN_WIDTH / UNIT_SIZE) * UNIT_SIZE;
-        appleY = random.nextInt((int) SCREEN_HEIGHT / UNIT_SIZE) * UNIT_SIZE;
-    }
-
-    public void checkApple() {
-        if ((x[0] == appleX) && y[0] == appleY) {
-            bodyParts++;
-            applesEaten++;
-            newApple();
-        }
-    }
-
-    public void newSpeed() {
-        //random.nextInt(10) * größe
-        speedX = random.nextInt((int) SCREEN_WIDTH / UNIT_SIZE) * UNIT_SIZE;
-        speedY = random.nextInt((int) SCREEN_HEIGHT / UNIT_SIZE) * UNIT_SIZE;
-    }
-
-    public void checkSpeed() {
-        if ((x[0] == speedX) && y[0] == speedY) {
-            setSpeed();
-            newSpeed();
-        }
-    }
-
-    public void setSpeed() {
-
-        java.util.Timer speedTimer = new java.util.Timer();
-        timer.setDelay(50);
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                timer.setDelay(75);
-                System.out.println("Speed ended");
-            }
-        };
-        speedTimer.schedule(task, 1000 * 5);
-    }
-
+    int temp = 0;
+    char lastKey;
 
     public void move() {
         for (int i = bodyParts; i > 0; i--) {
@@ -140,22 +107,23 @@ public class GamePanel extends JPanel implements ActionListener {
             y[i] = y[i - 1];
         }
 
-        switch (direction) {
-            case 'U':
-                y[0] = y[0] - UNIT_SIZE;
-                break;
-            case 'D':
-                y[0] = y[0] + UNIT_SIZE;
-                break;
-            case 'L':
-                x[0] = x[0] - UNIT_SIZE;
-                break;
-            case 'R':
-                x[0] = x[0] + UNIT_SIZE;
-                break;
-
-
+        if (inverter.getInverted() && (lastKey != direction || temp >= 2)) {
+            temp++;
+            switch (direction) {
+                case 'U' -> y[0] = y[0] + UNIT_SIZE;
+                case 'D' -> y[0] = y[0] - UNIT_SIZE;
+                case 'L' -> x[0] = x[0] + UNIT_SIZE;
+                case 'R' -> x[0] = x[0] - UNIT_SIZE;
+            }
+        } else {
+            switch (direction) {
+                case 'U' -> y[0] = y[0] - UNIT_SIZE;
+                case 'D' -> y[0] = y[0] + UNIT_SIZE;
+                case 'L' -> x[0] = x[0] - UNIT_SIZE;
+                case 'R' -> x[0] = x[0] + UNIT_SIZE;
+            }
         }
+        lastKey = direction;
 
     }
 
@@ -210,8 +178,10 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public static class MyKeyAdapter extends KeyAdapter {
+
         @Override
         public void keyPressed(KeyEvent e) {
+
             switch (e.getKeyCode()) {
                 case KeyEvent.VK_A:
                     if (direction != 'R') {
@@ -238,6 +208,7 @@ public class GamePanel extends JPanel implements ActionListener {
                     break;
 
             }
+
         }
 
     }
@@ -247,8 +218,9 @@ public class GamePanel extends JPanel implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (running) {
             move();
-            checkApple();
-            checkSpeed();
+            apple.checkApple();
+            speed.checkSpeed();
+            inverter.checkInverter();
             checkCollisions();
         }
         repaint();
