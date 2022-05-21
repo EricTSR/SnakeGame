@@ -9,7 +9,7 @@ import java.util.TimerTask;
 public class OBJ_Inverter {
 
     int inverterX, inverterY;
-    boolean inverted;
+    public static boolean inverted;
 
     public void newInverter() {
         //random.nextInt(10) * größe

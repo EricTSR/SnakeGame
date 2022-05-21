@@ -2,6 +2,7 @@ package de.erictsr.snake.main;
 
 import de.erictsr.snake.main.OBJ.OBJ_Apple;
 import de.erictsr.snake.main.OBJ.OBJ_Inverter;
+import de.erictsr.snake.main.OBJ.OBJ_LSD;
 import de.erictsr.snake.main.OBJ.OBJ_Speed;
 
 import javax.swing.*;
@@ -25,7 +26,6 @@ public class GamePanel extends JPanel implements ActionListener {
     public static final int[] y = new int[GAME_UNITS];
     public static int bodyParts = 6;
     public static int applesEaten = 0;
-    int speedX, speedY;
     static char direction = 'R';
     boolean running = false;
     public static Timer timer;
@@ -34,6 +34,7 @@ public class GamePanel extends JPanel implements ActionListener {
     OBJ_Apple apple = new OBJ_Apple();
     OBJ_Speed speed = new OBJ_Speed();
     OBJ_Inverter inverter = new OBJ_Inverter();
+    OBJ_LSD lsd = new OBJ_LSD();
 
     public GamePanel() {
         random = new Random();
@@ -48,6 +49,7 @@ public class GamePanel extends JPanel implements ActionListener {
     public void startGame() {
         apple.newApple();
         speed.newSpeed();
+        lsd.newLSD();
         inverter.newInverter();
         running = true;
         timer = new Timer(DELAY, this);
@@ -62,7 +64,12 @@ public class GamePanel extends JPanel implements ActionListener {
     public void draw(Graphics g) {
         if (running) {
 
-            this.setBackground(Color.BLACK);
+            if (lsd.getLSD()) {
+                this.setBackground(new Color(new Random().nextInt(255), new Random().nextInt(255), new Random().nextInt(255)));
+            } else {
+                this.setBackground(Color.BLACK);
+            }
+
 
             for (int i = 0; i < SCREEN_WIDTH / UNIT_SIZE; i++) {
                 g.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
@@ -70,6 +77,7 @@ public class GamePanel extends JPanel implements ActionListener {
             }
             apple.draw(g);
             speed.draw(g);
+            lsd.draw(g);
             inverter.draw(g);
 
 
@@ -98,41 +106,28 @@ public class GamePanel extends JPanel implements ActionListener {
 
     }
 
-    int temp = 0;
-    char lastKey;
-
     public void move() {
         for (int i = bodyParts; i > 0; i--) {
             x[i] = x[i - 1];
             y[i] = y[i - 1];
         }
 
-        if (inverter.getInverted() && (lastKey != direction || temp >= 2)) {
-            temp++;
-            switch (direction) {
-                case 'U' -> y[0] = y[0] + UNIT_SIZE;
-                case 'D' -> y[0] = y[0] - UNIT_SIZE;
-                case 'L' -> x[0] = x[0] + UNIT_SIZE;
-                case 'R' -> x[0] = x[0] - UNIT_SIZE;
-            }
-        } else {
-            switch (direction) {
-                case 'U' -> y[0] = y[0] - UNIT_SIZE;
-                case 'D' -> y[0] = y[0] + UNIT_SIZE;
-                case 'L' -> x[0] = x[0] - UNIT_SIZE;
-                case 'R' -> x[0] = x[0] + UNIT_SIZE;
-            }
+        switch (direction) {
+            case 'U' -> y[0] = y[0] - UNIT_SIZE;
+            case 'D' -> y[0] = y[0] + UNIT_SIZE;
+            case 'L' -> x[0] = x[0] - UNIT_SIZE;
+            case 'R' -> x[0] = x[0] + UNIT_SIZE;
         }
-        lastKey = direction;
 
     }
 
     public void checkCollisions() {
 
         //checks if head collides with body
-        for (int i = bodyParts; i < 0; i--) {
+        for (int i = bodyParts; i > 0; i--) {
             if ((x[0] == x[i]) && (y[0] == y[i])) {
                 running = false;
+                break;
             }
         }
 
@@ -179,46 +174,77 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public static class MyKeyAdapter extends KeyAdapter {
 
+        OBJ_Inverter inverter = new OBJ_Inverter();
+
         @Override
         public void keyPressed(KeyEvent e) {
+            if (!inverter.getInverted()) {
 
-            switch (e.getKeyCode()) {
-                case KeyEvent.VK_A:
-                    if (direction != 'R') {
-                        direction = 'L';
-                    }
-                    break;
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_A:
+                        if (direction != 'R') {
+                            direction = 'L';
+                        }
+                        break;
 
-                case KeyEvent.VK_D:
-                    if (direction != 'L') {
-                        direction = 'R';
-                    }
-                    break;
+                    case KeyEvent.VK_D:
+                        if (direction != 'L') {
+                            direction = 'R';
+                        }
+                        break;
 
-                case KeyEvent.VK_W:
-                    if (direction != 'D') {
-                        direction = 'U';
-                    }
-                    break;
+                    case KeyEvent.VK_W:
+                        if (direction != 'D') {
+                            direction = 'U';
+                        }
+                        break;
 
-                case KeyEvent.VK_S:
-                    if (direction != 'U') {
-                        direction = 'D';
-                    }
-                    break;
+                    case KeyEvent.VK_S:
+                        if (direction != 'U') {
+                            direction = 'D';
+                        }
+                        break;
 
+                }
+            } else {
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_A:
+                        if (direction != 'L') {
+                            direction = 'R';
+                        }
+                        break;
+
+                    case KeyEvent.VK_D:
+                        if (direction != 'R') {
+                            direction = 'L';
+                        }
+                        break;
+
+                    case KeyEvent.VK_W:
+                        if (direction != 'U') {
+                            direction = 'D';
+                        }
+                        break;
+
+                    case KeyEvent.VK_S:
+                        if (direction != 'D') {
+                            direction = 'U';
+                        }
+                        break;
+
+                }
             }
 
         }
 
     }
 
-
     @Override
     public void actionPerformed(ActionEvent e) {
         if (running) {
             move();
             apple.checkApple();
+            lsd.checkLSD();
             speed.checkSpeed();
             inverter.checkInverter();
             checkCollisions();
