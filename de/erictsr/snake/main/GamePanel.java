@@ -31,16 +31,13 @@ public class GamePanel extends JPanel implements ActionListener {
     public static int bodyParts = 6;
     public static int applesEaten = 0;
     static char direction = 'R';
-    boolean running = false;
     public static Timer timer;
 
     public static Image imgR;
     public static Image imgL;
     public static Image imgD;
     public static Image imgU;
-
     Random random;
-
 
     //import Items
     OBJ_Apple apple = new OBJ_Apple();
@@ -55,20 +52,21 @@ public class GamePanel extends JPanel implements ActionListener {
         this.setFocusable(true);
         this.addKeyListener(new MyKeyAdapter());
 
+        imgU = Toolkit.getDefaultToolkit().getImage("./src/rsc/jannis_U.png");
+        imgD = Toolkit.getDefaultToolkit().getImage("./src/rsc/jannis_D.png");
+        imgL = Toolkit.getDefaultToolkit().getImage("./src/rsc/jannis_L.png");
+        imgR = Toolkit.getDefaultToolkit().getImage("./src/rsc/jannis_R.png");
+
         startGame();
     }
 
     public void startGame() {
 
-        imgU = Toolkit.getDefaultToolkit().getImage("./src/rsc/jannis_U.png");
-        imgD = Toolkit.getDefaultToolkit().getImage("./src/rsc/jannis_D.png");
-        imgL = Toolkit.getDefaultToolkit().getImage("./src/rsc/jannis_L.png");
-        imgR = Toolkit.getDefaultToolkit().getImage("./src/rsc/jannis_R.png");
         apple.newApple();
         speed.newSpeed();
         lsd.newLSD();
         inverter.newInverter();
-        running = true;
+        GameFrame.running = true;
         timer = new Timer(DELAY, this);
 
         timer.start();
@@ -81,7 +79,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
 
     public void draw(Graphics g) {
-        if (running) {
+        if (GameFrame.running) {
 
             if (lsd.getLSD()) {
                 this.setBackground(new Color(new Random().nextInt(255), new Random().nextInt(255), new Random().nextInt(255)));
@@ -90,7 +88,7 @@ public class GamePanel extends JPanel implements ActionListener {
             }
 
 
-            for (int i = 0; i < SCREEN_WIDTH / UNIT_SIZE; i++) {
+            for (int i = 0; i <= SCREEN_WIDTH / UNIT_SIZE; i++) {
                 g.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
                 g.drawLine(0, i * UNIT_SIZE, SCREEN_WIDTH, i * UNIT_SIZE);
             }
@@ -102,6 +100,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
             for (int i = 0; i < bodyParts; i++) {
                 if (i == 0) {
+                    //ToDo: In Case packen
                     if (direction == 'U') {
                         g.drawImage(imgU, x[i], y[i], UNIT_SIZE, UNIT_SIZE, null);
                     } else if (direction == 'D') {
@@ -152,32 +151,32 @@ public class GamePanel extends JPanel implements ActionListener {
         //checks if head collides with body
         for (int i = bodyParts; i > 0; i--) {
             if ((x[0] == x[i]) && (y[0] == y[i])) {
-                running = false;
+                GameFrame.running = false;
                 break;
             }
         }
 
         //checks if head touches left boarder
         if (x[0] < 0) {
-            running = false;
+            GameFrame.running = false;
         }
 
         //checks if head touches right boarder
         if (x[0] > SCREEN_WIDTH) {
-            running = false;
+            GameFrame.running = false;
         }
 
         //checks if head touches top boarder
         if (y[0] < 0) {
-            running = false;
+            GameFrame.running = false;
         }
 
         //checks if head touches bottom boarder
         if (y[0] > SCREEN_HEIGHT) {
-            running = false;
+            GameFrame.running = false;
         }
 
-        if (!running) {
+        if (!GameFrame.running) {
             timer.stop();
         }
 
@@ -196,6 +195,8 @@ public class GamePanel extends JPanel implements ActionListener {
         g.setFont(new Font("Ink Free", Font.BOLD, 75));
         FontMetrics metrics = getFontMetrics(g.getFont());
         g.drawString("Game Over", (SCREEN_WIDTH - metrics.stringWidth("Game Over")) / 2, SCREEN_HEIGHT / 2);
+
+
     }
 
     public static class MyKeyAdapter extends KeyAdapter {
@@ -267,7 +268,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (running) {
+        if (GameFrame.running) {
             move();
             apple.checkApple();
             lsd.checkLSD();
@@ -275,6 +276,9 @@ public class GamePanel extends JPanel implements ActionListener {
             inverter.checkInverter();
             checkCollisions();
         }
+
         repaint();
+
+
     }
 }
